@@ -8,23 +8,21 @@ const SESSION_DURATION = 60 * 60 * 24 * 7;
 
 // Set session cookie
 export async function setSessionCookie(idToken: string) {
-  
   const cookieStore = await cookies();
 
+  // Create session cookie
   const sessionCookie = await auth.createSessionCookie(idToken, {
     expiresIn: SESSION_DURATION * 1000, // milliseconds
   });
 
-
+  // Set cookie in the browser
   cookieStore.set("session", sessionCookie, {
     maxAge: SESSION_DURATION,
     httpOnly: true,
-    secure: false, // ❗ Set to false for local testing
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     sameSite: "lax",
   });
-
-  console.log("Session cookie stored successfully!");
 }
 
 export async function signUp(params: SignUpParams) {
@@ -71,7 +69,6 @@ export async function signUp(params: SignUpParams) {
 
 export async function signIn(params: SignInParams) {
   const { email, idToken } = params;
-console.log(idToken);
 
   try {
     const userRecord = await auth.getUserByEmail(email);
@@ -108,6 +105,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
   try {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+
     // get user info from db
     const userRecord = await db
       .collection("users")
